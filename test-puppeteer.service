@@ -1,0 +1,19 @@
+[Unit]
+Description=puppeteer-diffstream
+
+[Service]
+Type=simple
+PIDFile=/run/puppeteer-diffstream/puppeteer-diffstream.pid
+WorkingDirectory=/opt/puppeteer-diffstream/
+ExecStartPre=/usr/bin/npm run build
+ExecStart=/usr/bin/node --use_strict --experimental-modules dist/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal+console
+SyslogLevel=debug
+SyslogIdentifier=puppeteer-diffstream
+
+[Install]
+WantedBy=multi-user.target
+Alias=puppeteer-diffstream.service

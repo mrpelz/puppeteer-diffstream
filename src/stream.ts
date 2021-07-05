@@ -300,19 +300,16 @@ export class Stream {
 
       if (type > 2 || x === null || y === null) return;
 
-      const effectiveX = this._dpr ? x / this._dpr : x;
-      const effectiveY = this._dpr ? y / this._dpr : y;
-
       // eslint-disable-next-line default-case
       switch (type) {
         case 0:
-          this._handleTouchend(effectiveX, effectiveY);
+          this._handleTouchend(x, y);
           break;
         case 1:
-          this._handleTouchstart(effectiveX, effectiveY);
+          this._handleTouchstart(x, y);
           break;
         case 2:
-          this._handleTouchmove(effectiveX, effectiveY);
+          this._handleTouchmove(x, y);
           break;
       }
     } catch (error) {

@@ -42,6 +42,7 @@ export class Stream {
   private readonly _index: number;
   private _isInteracting: boolean;
   private _page: Page | null = null;
+  private _paused = false;
   private _previousImage: ImageData | null = null;
   private _runningTimeout: NodeJS.Timeout | null = null;
   private readonly _timeout: number;
@@ -105,7 +106,7 @@ export class Stream {
         await this._screenshot();
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error(error);
+        console.error(`could not setup page: ${error}`);
       }
     })();
   }
@@ -120,7 +121,7 @@ export class Stream {
     this._downX = -1;
     this._downY = -1;
 
-    if (noMovementInteraction) {
+    if (!noMovementInteraction) {
       await this._cdp.send('Input.dispatchTouchEvent', {
         touchPoints: [],
         type: 'touchEnd',
@@ -135,9 +136,6 @@ export class Stream {
 
   private async _handleTouchmove(x: number, y: number) {
     if (!this._cdp || !this._isInteracting) return;
-
-    this._downX = x;
-    this._downY = y;
 
     await this._cdp.send('Input.dispatchTouchEvent', {
       touchPoints: [{ x, y }],
@@ -178,7 +176,7 @@ export class Stream {
   }
 
   private async _screenshot() {
-    if (!this._cdp) return;
+    if (this._paused || !this._cdp) return;
 
     if (this._runningTimeout) {
       clearTimeout(this._runningTimeout);
@@ -191,10 +189,7 @@ export class Stream {
 
     await this._handleScreenshot(data);
 
-    this._runningTimeout = setTimeout(
-      this._screenshot,
-      this._isInteracting ? this._timeout / 10 : this._timeout
-    );
+    this._runningTimeout = setTimeout(this._screenshot, this._timeout);
   }
 
   private _writeDebugOutput(input: Buffer, rect: Rect, frame: number) {
@@ -261,15 +256,12 @@ export class Stream {
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error(error);
+      console.error(`could not calculate diff update: ${error}`);
     }
   }
 
   async close(): Promise<void> {
-    if (this._runningTimeout) {
-      clearInterval(this._runningTimeout);
-      this._runningTimeout = null;
-    }
+    this.stopUpdates();
 
     if (!this._page) return;
     await this._page.close();
@@ -277,15 +269,29 @@ export class Stream {
     this._page = null;
   }
 
-  setCallback(callback: Callback): void {
-    this._callback = callback;
-  }
-
-  async touch(input: Buffer): Promise<void> {
-    if (input.length < 12) return;
+  async injectIncomingEvent(input: Buffer): Promise<void> {
+    if (input.length < 4) return;
 
     try {
-      const type = input.readUInt32LE(0) as 0 | 1 | 2;
+      const type = input.readUInt32LE(0) as 0 | 1 | 2 | 3 | 4;
+
+      // eslint-disable-next-line no-console
+      if (type >= 3) console.info(JSON.stringify({ type }));
+
+      // eslint-disable-next-line default-case
+      switch (type) {
+        case 3:
+          this._paused = true;
+          this.stopUpdates();
+          return;
+        case 4:
+          this._paused = false;
+          this._screenshot();
+          return;
+      }
+
+      if (input.length < 12) return;
+
       const x = input.readUInt32LE(4);
       const y = input.readUInt32LE(8);
 
@@ -307,9 +313,22 @@ export class Stream {
           break;
         case 2:
           this._handleTouchmove(effectiveX, effectiveY);
+          break;
       }
-    } catch {
-      // noop
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`could not handle incoming data: ${error}`);
+    }
+  }
+
+  setCallback(callback: Callback): void {
+    this._callback = callback;
+  }
+
+  stopUpdates(): void {
+    if (this._runningTimeout) {
+      clearInterval(this._runningTimeout);
+      this._runningTimeout = null;
     }
   }
 }

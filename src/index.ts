@@ -48,30 +48,29 @@ wss.on('listening', () => {
       return;
     }
 
-    const colors = query.get('colors');
-    const width = query.get('width');
-    const height = query.get('height');
-    const depth = query.get('depth');
-    const dpr = query.get('dpr');
-    const timeout = query.get('timeout');
+    const queryAsNumber = (name: string) => {
+      const rawValue = query.get(name);
+      if (!rawValue) return undefined;
 
-    const size = Boolean(width && height);
+      const value = Number.parseInt(rawValue, 10);
+      if (Number.isNaN(value)) return undefined;
+
+      return value;
+    };
 
     try {
       const stream = new Stream(
         browser,
         new URL(url),
-        timeout ? Number(timeout) : undefined,
-        colors ? 'grayscale' : 'rgb',
-        colors ? Number(colors) : undefined,
-        depth ? Number(depth) : undefined,
-        size
-          ? {
-              height: Number(height),
-              width: Number(width),
-            }
-          : undefined,
-        dpr ? Number(dpr) : undefined,
+        queryAsNumber('timeout'),
+        queryAsNumber('colors') ? 'grayscale' : 'rgb',
+        queryAsNumber('colors'),
+        queryAsNumber('depth'),
+        {
+          height: queryAsNumber('height'),
+          width: queryAsNumber('width'),
+        },
+        queryAsNumber('dpr'),
         debug
       );
 
@@ -79,7 +78,7 @@ wss.on('listening', () => {
 
       ws.on('message', (input) => {
         if (!(input instanceof Buffer)) return;
-        stream.touch(input);
+        stream.injectIncomingEvent(input);
       });
 
       ws.on('close', () => {

@@ -71,25 +71,31 @@ export function getPixel(
 function fullChange(a: ImageData, b: ImageData, channels: number) {
   const { height, width } = b;
 
+  const minX = 0;
+  const maxX = width - 1;
+
+  const minY = 0;
+  const maxY = height - 1;
+
   return (
     !equalPixel(
-      getPixel(a, { x: 0, y: 0 }, channels),
-      getPixel(b, { x: 0, y: 0 }, channels),
+      getPixel(a, { x: minX, y: minY }, channels),
+      getPixel(b, { x: minX, y: minY }, channels),
       channels
     ) &&
     !equalPixel(
-      getPixel(a, { x: width, y: 0 }, channels),
-      getPixel(b, { x: width, y: 0 }, channels),
+      getPixel(a, { x: maxX, y: minY }, channels),
+      getPixel(b, { x: maxX, y: minY }, channels),
       channels
     ) &&
     !equalPixel(
-      getPixel(a, { x: width, y: height }, channels),
-      getPixel(b, { x: width, y: height }, channels),
+      getPixel(a, { x: maxX, y: maxY }, channels),
+      getPixel(b, { x: maxX, y: maxY }, channels),
       channels
     ) &&
     !equalPixel(
-      getPixel(a, { x: 0, y: height }, channels),
-      getPixel(b, { x: 0, y: height }, channels),
+      getPixel(a, { x: minX, y: maxY }, channels),
+      getPixel(b, { x: minX, y: maxY }, channels),
       channels
     )
   );

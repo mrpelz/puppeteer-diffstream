@@ -103,6 +103,23 @@ export class Stream {
 
       try {
         await this._page.goto(url.href);
+
+        // disable smooth font rendering when only 1bit color is available
+        if (
+          this._colorGrayscale &&
+          this._colorSteps &&
+          this._colorSteps === 2
+        ) {
+          await this._page.addStyleTag({
+            content: `
+              :root {
+                -webkit-font-smoothing: none;
+                font-smooth: none;
+              }
+            `.trim(),
+          });
+        }
+
         await this._screenshot();
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -229,6 +246,17 @@ export class Stream {
         const { height, width, x: left, y: top } = difference;
         const extract = await screenshot.extract({ height, left, top, width });
 
+        if (this._debug) {
+          this._writeDebugOutput(
+            await remapColors(
+              extract,
+              this._colorGrayscale && this._colorSteps ? this._colorSteps : null
+            ),
+            difference,
+            thisFrame
+          );
+        }
+
         if (!this._callback) return;
 
         const mapped = await remapColors(
@@ -242,17 +270,6 @@ export class Stream {
         if (thisFrame + 1 !== this._frame) return;
 
         this._callback(this._packageUpdate(packed, difference));
-
-        if (!this._debug) return;
-
-        this._writeDebugOutput(
-          await remapColors(
-            extract,
-            this._colorGrayscale && this._colorSteps ? this._colorSteps : null
-          ),
-          difference,
-          thisFrame
-        );
       }
     } catch (error) {
       // eslint-disable-next-line no-console

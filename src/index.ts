@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { promisify } from 'util';
 import puppeteer from 'puppeteer';
 
-const debug = false;
+const debug = true;
 const port = 1337;
 
 export const screenshotPath = './dist/screenshots';
@@ -101,6 +101,22 @@ wss.on('listening', () => {
   if (debug) {
     await promisify(mkdir)(screenshotPath);
   }
+
+  // // eslint-disable-next-line no-new
+  // new Stream(
+  //   browser,
+  //   new URL('https://iot.i.wurstsalat.cloud/#dao=0&swo=0&olo=1&pao=0'),
+  //   5000,
+  //   'grayscale',
+  //   2,
+  //   undefined,
+  //   {
+  //     height: 528,
+  //     width: 880,
+  //   },
+  //   2,
+  //   debug
+  // );
 
   // eslint-disable-next-line no-console
   console.info('startup done');

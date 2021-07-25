@@ -189,8 +189,14 @@ export function diff(
 export async function remapColors(
   input: Sharp,
   colorSteps: null | number,
-  depth = 255
+  depth = 255,
+  rgb16 = false
 ): Promise<Buffer> {
+  if (rgb16) {
+    const { data } = await toRaw(input.toColorspace('rgb16'));
+    return data;
+  }
+
   const { data } = await toRaw(input);
 
   if (!colorSteps || colorSteps <= 1) return data;

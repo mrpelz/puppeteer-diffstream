@@ -44,6 +44,7 @@ export class Stream {
   private _page: Page | null = null;
   private _paused = false;
   private _previousImage: ImageData | null = null;
+  private readonly _rgb16: boolean;
   private _runningTimeout: NodeJS.Timeout | null = null;
   private readonly _timeout: number;
 
@@ -54,6 +55,7 @@ export class Stream {
     colorType: ColorType,
     colorSteps?: number,
     depth = 255,
+    rgb16 = false,
     viewport?: Partial<Viewport>,
     dpr?: number,
     debug?: boolean
@@ -69,6 +71,7 @@ export class Stream {
     this._colorGrayscale = colorType === 'grayscale';
     this._colorSteps = colorSteps;
     this._depth = depth;
+    this._rgb16 = rgb16;
 
     this._dpr = dpr && !(dpr % 2) ? dpr : 0;
 
@@ -262,7 +265,8 @@ export class Stream {
         const mapped = await remapColors(
           extract,
           this._colorGrayscale && this._colorSteps ? this._colorSteps : null,
-          this._depth
+          this._depth,
+          this._rgb16
         );
 
         const packed = this._colorSteps ? pack(mapped, difference) : mapped;

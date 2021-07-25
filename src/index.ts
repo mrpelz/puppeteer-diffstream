@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { promisify } from 'util';
 import puppeteer from 'puppeteer';
 
-const debug = true;
+const debug = false;
 const port = 1337;
 
 export const screenshotPath = './dist/screenshots';
@@ -66,6 +66,7 @@ wss.on('listening', () => {
         queryAsNumber('colors') ? 'grayscale' : 'rgb',
         queryAsNumber('colors'),
         queryAsNumber('depth'),
+        Boolean(queryAsNumber('rgb16')),
         {
           height: queryAsNumber('height'),
           width: queryAsNumber('width'),
@@ -110,6 +111,7 @@ wss.on('listening', () => {
   //   'grayscale',
   //   2,
   //   undefined,
+  //   false,
   //   {
   //     height: 528,
   //     width: 880,
